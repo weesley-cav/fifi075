@@ -3,31 +3,33 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 const int BUTTON_SETUP = 10;            //Botão no pino 10
 const int BUTTON_UP = 8;                //Botão no pino 8
-const int BUTTON_DOWN = 9;				//Botão no pino 9
-
+const int BUTTON_DOWN = 9;		      		//Botão no pino 9
 const int BACKLIGHT = 7;                //Backlight do display no pino 7
 
 int button_press_setup = 0;             //Valor lido pelo botão setup
 int button_press_up = 0;                //Valor lido pelo botão up
 int button_press_down = 0;              //Valor lido pelo botão down
 
-int setup_mode =0;                         //Valor relacionado ao estado do sistema
-
+int portion = 200;                      //Porção a ser colocada para o PET;
+int time = 21600;                       //Valor temporal para controle do sistema
+int showtime = 0;                       //Tempo a ser exibido no display
+int setup_mode = 0;                     //Valor relacionado ao estado do sistema
+boolean startdecision = false;          //Decisão tomada pelo usuário ao final da configuração
 
 void setup() 
 {
-  pinMode(BUTTON_DOWN,INPUT);           //Definindo as entradas e saídas
+  pinMode(BUTTON_DOWN,INPUT);           //Definindo as entradas e saídas e inicializando o LCD
   pinMode(BUTTON_SETUP,INPUT);            
   pinMode(BUTTON_UP,INPUT);                
-  lcd.begin(16, 2);                     //Inicializalizando o LCD
+  lcd.begin(16, 2);                     
 }
- 
 
 void loop()
 {
  button_press_setup = digitalRead(BUTTON_SETUP); 		//Leitura dos sensores e atualização do display     
  delay(200);
  lcd.clear();
+ 
  if (button_press_setup==1)              			    //Lógica para ligar/desligar o sistema
  {
   if (button_press_setup=!setup_mode)
@@ -36,32 +38,84 @@ void loop()
   }
   else 
    setup_mode=0;
- }                
- if (button_press==0 && setup_mode==0)   			   //Estados do sistema
- {                                      					//Se desligado, apagar o backlight; mostrar que está ativo através da mensagem de funcionamento.
+ }
+
+ if (button_press==0 && setup_mode==0)   			  //Estados do sistema
+ {                                      				//Se desligado, apagar o backlight; mostrar que está ativo através da mensagem de funcionamento.
   digitalWrite(BACKLIGHT,LOW);
   lcd.setCursor(4, 1);
   lcd.print("FEED FIFI");
  }
+
  if (button_press==0 && setup_mode==1)   				   //Se ligado, mostrar menu de configuração; Ativar o backlight.
  {
    digitalWrite(BACKLIGHT,HIGH);
    lcd.setCursor(4, 0);
    lcd.print("SETUP");          
-   delay(500);
+   delay(1500);
    lcd.setCursor(4, 0);
-   lcd.print("INTERVALO");
-   *************colocar lógica de ajuste do tempo
-   if (button_press==0 && setup_mode ==1)
+   lcd.print("INTERVALO");                        //Menu para configuração do intervalo
+   lcd.setCursor(7, 1);
+   lcd.print("6 HORAS");
+   time=21600;
+   if (time > 7200)
+    {  if (digitalRead(BUTTON_DOWN)==HIGH)
+         { time=time-7200
+           showtime=time/3600
+           lcd.setCursor(7, 1);
+           lcd.print(showtime, "HORAS");
+         }     
+    }
+   if (time < 43200)
+    {
+        if (digitalRead(BUTTON_UP)==HIGH)
+         { time=time+7200
+           showtime=time/3600
+           lcd.setCursor(7, 1);
+           lcd.print(showtime, "HORAS");
+         }
+    }
+
+   if (button_press==0 && setup_mode ==1)        //Menu para configuração da quantidade
     { lcd.setCursor(4, 0);
       lcd.print("QUANTIDADE");
-       *************colocar lógica de ajuste da quantidade
-           if (button_press==0 && setup_mode ==1)
+      lcd.setCursor(7, 1);
+      lcd.print("200g");
+      if (portion > 50)
+    {  if (digitalRead(BUTTON_DOWN)==HIGH)
+         { portion=portion-150;
+           lcd.setCursor(7, 1);
+           lcd.print(portion, "g");
+         }     
+    }
+   if (portion < 500)
+    {
+        if (digitalRead(BUTTON_UP)==HIGH)
+         { portion=portion+150;
+           lcd.setCursor(7, 1);
+           lcd.print(portion, "g");
+         }
+    }
+           if (button_press==0 && setup_mode ==1)    // Menu para configuração da decisão de alimentar agora ou não
                { lcd.setCursor(4, 0);
                  lcd.print("DESEJA ALIMENTAR AGORA?");
-                 *************colocar lógica para disparo
-                  if (button_press==0 && setup_mode ==1)
-                     { *****tempo deve começar a correr
+                 lcd.setCursor(7, 1);
+                 lcd.print("NAO");
+                 if (digitalRead(BUTTON_DOWN)==HIGH || digitalRead(BUTTON_UP)==HIGH)
+                   { startdecision!=startdecision
+                        if (startdecision==true)
+                         { lcd.setCursor(7, 1);
+                           lcd.print("SIM");
+                         }
+                         if (startdecision==false)
+                         { lcd.setCursor(7, 1);
+                           lcd.print("NAO");
+                         }     
+                      
+                 if (button_press==0 && setup_mode ==1)        //Contagem regressiva para alimentação
+                     { for (time, time==0, time--)
+                        {delay(1);
+                        }
                        setup_mode=0;
                      }
                 }
