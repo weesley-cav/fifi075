@@ -30,7 +30,7 @@ void loop()
  delay(200);
  lcd.clear();
  
- if (button_press_setup==1)              			    //Lógica para ligar/desligar o sistema
+ if (button_press_setup==1)              			      //Lógica para ligar/desligar o sistema
  {
   if (button_press_setup=!setup_mode)
   {
@@ -40,21 +40,21 @@ void loop()
    setup_mode=0;
  }
 
- if (button_press==0 && setup_mode==0)   			  //Estados do sistema
+ if (button_press==0 && setup_mode==0)   			     //Estados do sistema
  {                                      				//Se desligado, apagar o backlight; mostrar que está ativo através da mensagem de funcionamento.
   digitalWrite(BACKLIGHT,LOW);
   lcd.setCursor(4, 1);
   lcd.print("FEED FIFI");
  }
 
- if (button_press==0 && setup_mode==1)   				   //Se ligado, mostrar menu de configuração; Ativar o backlight.
+ if (button_press==0 && setup_mode==1)   			  //Se ligado, mostrar menu de configuração; Ativar o backlight.
  {
    digitalWrite(BACKLIGHT,HIGH);
    lcd.setCursor(4, 0);
    lcd.print("SETUP");          
    delay(1500);
    lcd.setCursor(4, 0);
-   lcd.print("INTERVALO");                        //Menu para configuração do intervalo
+   lcd.print("INTERVALO");                                      //Menu para configuração do intervalo.
    lcd.setCursor(7, 1);
    lcd.print("6 HORAS");
    time=21600;
@@ -76,7 +76,7 @@ void loop()
          }
     }
 
-   if (button_press==0 && setup_mode ==1)        //Menu para configuração da quantidade
+   if (button_press==0 && setup_mode ==1)                       //Menu para configuração da quantidade.
     { lcd.setCursor(4, 0);
       lcd.print("QUANTIDADE");
       lcd.setCursor(7, 1);
@@ -96,7 +96,7 @@ void loop()
            lcd.print(portion, "g");
          }
     }
-           if (button_press==0 && setup_mode ==1)    // Menu para configuração da decisão de alimentar agora ou não
+           if (button_press==0 && setup_mode ==1)               //Menu para configuração da decisão de alimentar agora ou não.
                { lcd.setCursor(4, 0);
                  lcd.print("DESEJA ALIMENTAR AGORA?");
                  lcd.setCursor(7, 1);
@@ -112,7 +112,7 @@ void loop()
                            lcd.print("NAO");
                          }     
                       
-                 if (button_press==0 && setup_mode ==1)        //Contagem regressiva para alimentação
+                 if (button_press==0 && setup_mode ==1)         //Contagem regressiva para alimentação
                      { for (time, time==0, time--)
                         {delay(1);
                         }
@@ -122,5 +122,12 @@ void loop()
      }
    
   }
-      
+
+  if (time==0 e *feed==1)
+  { if (move*==1)
+      { if (weight* < portion)
+          { ATIVAR O MOTOR
+          }
+      }      
+  }
 }
