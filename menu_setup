@@ -123,8 +123,8 @@ void loop()
    
   }
 
-  if (time==0 e *feed==1)
-  { if (move*==1)
+  if (time==0 e *feed==1)                                       //Acionamento do motor com base nas condições desejadas
+  { if (move*==1)                                               //* significa que precisa ser declarado
       { if (weight* < portion)
           { ATIVAR O MOTOR
           }
