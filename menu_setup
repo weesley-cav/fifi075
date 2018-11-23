@@ -13,8 +13,7 @@ int showtime = 0;                                 //Tempo a ser exibido no displ
 int setup_mode = 1;                               //Valor relacionado ao estado do menu
 int setup_on = 0;                                 //Estado do sistema de menu
 int time_running = 0;                             //Decisão de correr o tempo
-int feed = 0;
-
+int feed = 0;                                     //Variável para acionamento do motor
 boolean startdecision = false;                    //Decisão tomada pelo usuário ao final da configuração
 
 void setup() 
@@ -32,13 +31,13 @@ void loop()
 {
   lcd.clear();
   delay(200);
-  //Serial.print (digitalRead(BUTTON_SETUP));
+  //Serial.print (digitalRead(BUTTON_SETUP));     //Coloquei uns valores pro monitor serial e acho uma boa pro debug. Posso colocar umas condições depois.
   //Serial.print (setup_mode);
   Serial.print (setup_on);
   if (digitalRead(BUTTON_SETUP)==HIGH)            //Lógica para ligar/desligar o sistema
-    { if (setup_mode>3)
-        {
-          setup_mode=1;
+    { if (setup_mode>3)                           //Se o estado do setup for maior que 3, deve voltar pro primeiro estado. Assim, garanto que só vai ficar nas telas de tempo, quantidade e 
+        {                                         //se deve alimentar agora. 
+          setup_mode=0;
           setup_on=0;
           time_running=1;
         }
@@ -75,7 +74,7 @@ void loop()
 //       { 
 //          if (digitalRead(MOVEMENT)==HIGH)         //* significa que precisa ser declarado
 //            {
-//             if (weight* < portion)
+//             if (weight* < portion)                //FALTA COLOCAR A LÓGICA PRO CÁLCULO EXATO DE PESO, PRECISA CALIBRAR O SENSOR PRA ISSO.
 //                { ATIVAR O MOTOR
 //                }
 //            }      
