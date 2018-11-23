@@ -3,17 +3,15 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 const int BUTTON_SETUP = 10;            //Botão no pino 10
 const int BUTTON_UP = 8;                //Botão no pino 8
-const int BUTTON_DOWN = 9;		      		//Botão no pino 9
+const int BUTTON_DOWN = 9;              //Botão no pino 9
 const int BACKLIGHT = 7;                //Backlight do display no pino 7
 
-int button_press_setup = 0;             //Valor lido pelo botão setup
-int button_press_up = 0;                //Valor lido pelo botão up
-int button_press_down = 0;              //Valor lido pelo botão down
-
 int portion = 200;                      //Porção a ser colocada para o PET;
-int time = 21600;                       //Valor temporal para controle do sistema
+int time_remain = 21600;                //Valor temporal para controle do sistema
 int showtime = 0;                       //Tempo a ser exibido no display
-int setup_mode = 0;                     //Valor relacionado ao estado do sistema
+int setup_mode = 1;                     //Valor relacionado ao estado do menu
+int setup_on = 0;                       //Estado do sistema de menu
+int time_running = 0;
 boolean startdecision = false;          //Decisão tomada pelo usuário ao final da configuração
 
 void setup() 
@@ -26,108 +24,136 @@ void setup()
 
 void loop()
 {
- button_press_setup = digitalRead(BUTTON_SETUP); 		//Leitura dos sensores e atualização do display     
- delay(200);
- lcd.clear();
- 
- if (button_press_setup==1)              			      //Lógica para ligar/desligar o sistema
- {
-  if (button_press_setup=!setup_mode)
-  {
-   setup_mode=1;
-  }
+  lcd.clear();
+  delay(200);
+  if (digitalRead(BUTTON_SETUP)==HIGH)                         //Lógica para ligar/desligar o sistema
+    { if (setup_mode=4)
+        {
+          setup_mode=1;
+          setup_on=0;
+        }
+        setup_mode++;
+      
+      if (setup_on==0)
+        {
+          setup_on=1;
+        }
+    }
   else 
-   setup_mode=0;
- }
-
- if (button_press==0 && setup_mode==0)   			     //Estados do sistema
- {                                      				//Se desligado, apagar o backlight; mostrar que está ativo através da mensagem de funcionamento.
-  digitalWrite(BACKLIGHT,LOW);
-  lcd.setCursor(4, 1);
-  lcd.print("FEED FIFI");
- }
-
- if (button_press==0 && setup_mode==1)   			  //Se ligado, mostrar menu de configuração; Ativar o backlight.
- {
-   digitalWrite(BACKLIGHT,HIGH);
-   lcd.setCursor(4, 0);
-   lcd.print("SETUP");          
-   delay(1500);
-   lcd.setCursor(4, 0);
-   lcd.print("INTERVALO");                                      //Menu para configuração do intervalo.
-   lcd.setCursor(7, 1);
-   lcd.print("6 HORAS");
-   time=21600;
-   if (time > 7200)
-    {  if (digitalRead(BUTTON_DOWN)==HIGH)
-         { time=time-7200
-           showtime=time/3600
-           lcd.setCursor(7, 1);
-           lcd.print(showtime, "HORAS");
-         }     
-    }
-   if (time < 43200)
-    {
-        if (digitalRead(BUTTON_UP)==HIGH)
-         { time=time+7200
-           showtime=time/3600
-           lcd.setCursor(7, 1);
-           lcd.print(showtime, "HORAS");
-         }
+    { 
+      setup_on=0;
     }
 
-   if (button_press==0 && setup_mode ==1)                       //Menu para configuração da quantidade.
-    { lcd.setCursor(4, 0);
-      lcd.print("QUANTIDADE");
-      lcd.setCursor(7, 1);
-      lcd.print("200g");
-      if (portion > 50)
-    {  if (digitalRead(BUTTON_DOWN)==HIGH)
-         { portion=portion-150;
-           lcd.setCursor(7, 1);
-           lcd.print(portion, "g");
-         }     
-    }
-   if (portion < 500)
-    {
-        if (digitalRead(BUTTON_UP)==HIGH)
-         { portion=portion+150;
-           lcd.setCursor(7, 1);
-           lcd.print(portion, "g");
-         }
-    }
-           if (button_press==0 && setup_mode ==1)               //Menu para configuração da decisão de alimentar agora ou não.
-               { lcd.setCursor(4, 0);
-                 lcd.print("DESEJA ALIMENTAR AGORA?");
+ 
+ if (setup_on==0)             //Estados do sistema
+   {                                              //Se desligado, apagar o backlight; mostrar que está ativo através da mensagem de funcionamento.
+     digitalWrite(BACKLIGHT,LOW);
+     lcd.setCursor(4, 1);
+     lcd.print("FEED FIFI");
+   }
+
+ if (setup_on==1)          //Se ligado, mostrar menu de configuração; Ativar o backlight.
+   { if (setup_mode==1)
+       {
+         digitalWrite(BACKLIGHT,HIGH);
+         lcd.setCursor(4, 0);
+         lcd.print("SETUP");          
+         delay(1500);
+         lcd.setCursor(4, 0);
+         lcd.print("INTERVALO");                                      //Menu para configuração do intervalo.
+         lcd.setCursor(7, 1);
+         lcd.print("6 HORAS");
+         time_remain=21600;
+         if (time_remain > 7200)
+           {  
+             if (digitalRead(BUTTON_DOWN)==HIGH)
+               { 
+                 time_remain=time_remain-7200;
+                 showtime=time_remain/3600;
                  lcd.setCursor(7, 1);
-                 lcd.print("NAO");
-                 if (digitalRead(BUTTON_DOWN)==HIGH || digitalRead(BUTTON_UP)==HIGH)
-                   { startdecision!=startdecision
-                        if (startdecision==true)
-                         { lcd.setCursor(7, 1);
-                           lcd.print("SIM");
-                         }
-                         if (startdecision==false)
-                         { lcd.setCursor(7, 1);
-                           lcd.print("NAO");
-                         }     
+                 lcd.print(showtime);
+                 lcd.print("HORAS");
+               }     
+           }
+         if (time_remain < 43200)
+           {
+             if (digitalRead(BUTTON_UP)==HIGH)
+               { 
+                 time_remain=time_remain+7200;
+                 showtime=time_remain/3600;
+                 lcd.setCursor(7, 1);
+                 lcd.print(showtime);
+                 lcd.print("HORAS");
+               }
+           }
+       }
+     if (setup_mode==2)                       //Menu para configuração da quantidade.
+       { 
+         lcd.setCursor(4, 0);
+         lcd.print("QUANTIDADE");
+         lcd.setCursor(7, 1);
+         lcd.print("200g");
+         if (portion > 50)
+           { 
+             if (digitalRead(BUTTON_DOWN)==HIGH)
+               { 
+                 portion=portion-150;
+                 lcd.setCursor(7, 1);
+                 lcd.print(portion);
+                 lcd.print("g");
+               }     
+           }
+         if (portion < 500)
+           {
+             if (digitalRead(BUTTON_UP)==HIGH)
+               { 
+                 portion=portion+150;
+                 lcd.setCursor(7, 1);
+                 lcd.print(portion);
+                 lcd.print("g");          
+               }
+            }
+       }
+       
+     if (setup_mode==3)               //Menu para configuração da decisão de alimentar agora ou não.
+       { 
+         lcd.setCursor(4, 0);
+         lcd.print("DESEJA ALIMENTAR AGORA?");
+         lcd.setCursor(7, 1);
+         lcd.print("NAO");
+         if (digitalRead(BUTTON_DOWN)==HIGH || digitalRead(BUTTON_UP)==HIGH)
+           { 
+             startdecision!=startdecision;
+             if (startdecision==true)
+               { 
+                 lcd.setCursor(7, 1);
+                 lcd.print("SIM");
+               }
+             if (startdecision==false)
+               { 
+                lcd.setCursor(7, 1);
+                lcd.print("NAO");
+               }     
                       
-                 if (button_press==0 && setup_mode ==1)         //Contagem regressiva para alimentação
-                     { for (time, time==0, time--)
-                        {delay(1);
-                        }
-                       setup_mode=0;
-                     }
-                }
-     }
+//  if (button_press_setup==0 && setup_mode ==1)         //Contagem regressiva para alimentação
+//     { 
+//       for (time, time==0,time--)
+//          {
+//            delay(1);
+//          }
+//       setup_mode=0;
+//     }
+           }
+       }
    
-  }
+    }
 
-  if (time==0 e *feed==1)                                       //Acionamento do motor com base nas condições desejadas
-  { if (move*==1)                                               //* significa que precisa ser declarado
-      { if (weight* < portion)
-          { ATIVAR O MOTOR
-          }
-      }      
-  }
+//  if (time==0 e *feed==1)                                       //Acionamento do motor com base nas condições desejadas
+//    { if (move*==1)                                               //* significa que precisa ser declarado
+//        { if (weight* < portion)
+//            { ATIVAR O MOTOR
+//            }
+//        }      
+//    }
 }
+ 
