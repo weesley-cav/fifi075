@@ -4,21 +4,23 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 const int BUTTON_SETUP = 10;            //Botão no pino 10
 const int BUTTON_UP = 8;                //Botão no pino 8
 const int BUTTON_DOWN = 9;              //Botão no pino 9
-const int BACKLIGHT = 7;                //Backlight do display no pino 7
+// const int BACKLIGHT = 7;                //Backlight do display no pino 7
 
 int portion = 200;                      //Porção a ser colocada para o PET;
 int time_remain = 21600;                //Valor temporal para controle do sistema
 int showtime = 0;                       //Tempo a ser exibido no display
 int setup_mode = 1;                     //Valor relacionado ao estado do menu
 int setup_on = 0;                       //Estado do sistema de menu
-int time_running = 0;
+int time_running = 0;                   //Decisão de correr o tempo
 boolean startdecision = false;          //Decisão tomada pelo usuário ao final da configuração
 
 void setup() 
 {
+  Serial.begin(9600);
   pinMode(BUTTON_DOWN,INPUT);           //Definindo as entradas e saídas e inicializando o LCD
   pinMode(BUTTON_SETUP,INPUT);            
-  pinMode(BUTTON_UP,INPUT);                
+  pinMode(BUTTON_UP,INPUT); 
+//  pinMode(BACKLIGHT, OUTPUT);  
   lcd.begin(16, 2);                     
 }
 
@@ -26,8 +28,11 @@ void loop()
 {
   lcd.clear();
   delay(200);
-  if (digitalRead(BUTTON_SETUP)==HIGH)                         //Lógica para ligar/desligar o sistema
-    { if (setup_mode=4)
+  //Serial.print (digitalRead(BUTTON_SETUP));
+  //Serial.print (setup_mode);
+  Serial.print (setup_on);
+  if (digitalRead(BUTTON_SETUP)==HIGH)            //Lógica para ligar/desligar o sistema
+    { if (setup_mode>3)
         {
           setup_mode=1;
           setup_on=0;
@@ -38,21 +43,37 @@ void loop()
         {
           setup_on=1;
         }
-    }
-  else 
-    { 
+      else 
+       { 
       setup_on=0;
+       }
     }
-
+  
  
- if (setup_on==0)             //Estados do sistema
+ if (setup_on==0)                                 //Estados do sistema
    {                                              //Se desligado, apagar o backlight; mostrar que está ativo através da mensagem de funcionamento.
      digitalWrite(BACKLIGHT,LOW);
      lcd.setCursor(4, 1);
      lcd.print("FEED FIFI");
+//   if (time_running==1)                         //Contagem regressiva para alimentação
+//     { 
+//       for (time_remain, time_remain==0,time_remain--)
+//          {
+//            delay(1000);
+//          }
+//     }
+//   if (time==0 e *feed==1)                      //Acionamento do motor com base nas condições desejadas
+//     { 
+//        if (move*==1)                           //* significa que precisa ser declarado
+//          {
+//            if (weight* < portion)
+//              { ATIVAR O MOTOR
+//              }
+//          }      
+//     }
    }
 
- if (setup_on==1)          //Se ligado, mostrar menu de configuração; Ativar o backlight.
+ if (setup_on==1)                                //Se ligado, mostrar menu de configuração; Ativar o backlight.
    { if (setup_mode==1)
        {
          digitalWrite(BACKLIGHT,HIGH);
@@ -60,7 +81,7 @@ void loop()
          lcd.print("SETUP");          
          delay(1500);
          lcd.setCursor(4, 0);
-         lcd.print("INTERVALO");                                      //Menu para configuração do intervalo.
+         lcd.print("INTERVALO");                  //Menu para configuração do intervalo.
          lcd.setCursor(7, 1);
          lcd.print("6 HORAS");
          time_remain=21600;
@@ -115,7 +136,7 @@ void loop()
             }
        }
        
-     if (setup_mode==3)               //Menu para configuração da decisão de alimentar agora ou não.
+     if (setup_mode==3)                     //Menu para configuração da decisão de alimentar agora ou não.
        { 
          lcd.setCursor(4, 0);
          lcd.print("DESEJA ALIMENTAR AGORA?");
@@ -135,25 +156,10 @@ void loop()
                 lcd.print("NAO");
                }     
                       
-//  if (button_press_setup==0 && setup_mode ==1)         //Contagem regressiva para alimentação
-//     { 
-//       for (time, time==0,time--)
-//          {
-//            delay(1);
-//          }
-//       setup_mode=0;
-//     }
+
            }
        }
    
     }
-
-//  if (time==0 e *feed==1)                                       //Acionamento do motor com base nas condições desejadas
-//    { if (move*==1)                                               //* significa que precisa ser declarado
-//        { if (weight* < portion)
-//            { ATIVAR O MOTOR
-//            }
-//        }      
-//    }
 }
  
