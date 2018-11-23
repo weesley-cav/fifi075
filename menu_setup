@@ -4,7 +4,7 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 const int BUTTON_SETUP = 10;            //Botão no pino 10
 const int BUTTON_UP = 8;                //Botão no pino 8
 const int BUTTON_DOWN = 9;              //Botão no pino 9
-// const int BACKLIGHT = 7;                //Backlight do display no pino 7
+const int BACKLIGHT = 7;                //Backlight do display no pino 7
 
 int portion = 200;                      //Porção a ser colocada para o PET;
 int time_remain = 21600;                //Valor temporal para controle do sistema
@@ -20,7 +20,7 @@ void setup()
   pinMode(BUTTON_DOWN,INPUT);           //Definindo as entradas e saídas e inicializando o LCD
   pinMode(BUTTON_SETUP,INPUT);            
   pinMode(BUTTON_UP,INPUT); 
-//  pinMode(BACKLIGHT, OUTPUT);  
+  pinMode(BACKLIGHT, OUTPUT);  
   lcd.begin(16, 2);                     
 }
 
@@ -162,4 +162,3 @@ void loop()
    
     }
 }
- 
