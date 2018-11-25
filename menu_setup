@@ -19,7 +19,7 @@ boolean startdecision = false;                    //Decisão tomada pelo usuári
 void setup() 
 {
   Serial.begin(9600);
-  pinMode(BUTTON_DOWN,INPUT);                     //Definindo as entradas e saídas e inicializando o LCD
+  pinMode(BUTTON_DOWN,INPUT);                     //Definindo as entradas e saídas, inicializando o LCD e o monitor serial.
   pinMode(BUTTON_SETUP,INPUT);            
   pinMode(BUTTON_UP,INPUT); 
   pinMode(BACKLIGHT, OUTPUT);
@@ -35,30 +35,25 @@ void loop()
   //Serial.print (setup_mode);
   Serial.print (setup_on);
   if (digitalRead(BUTTON_SETUP)==HIGH)            //Lógica para ligar/desligar o sistema
-    { if (setup_mode>3)                           //Se o estado do setup for maior que 3, deve voltar pro primeiro estado. Assim, garanto que só vai ficar nas telas de tempo, quantidade e 
+    { setup_mode++;
+      if (setup_on==0)
+        {
+          setup_on=1;
+        }      
+      if (setup_mode>3)                           //Se o estado do setup for maior que 3, deve voltar pro primeiro estado. Assim, garanto que só vai ficar nas telas de tempo, quantidade e 
         {                                         //se deve alimentar agora. 
           setup_mode=0;
           setup_on=0;
           time_running=1;
         }
-        setup_mode++;
-      
-      if (setup_on==0)
-        {
-          setup_on=1;
-        }
-      else 
-       { 
-      setup_on=0;
-       }
-    }
+     }
   
  
  if (setup_on==0)                                 //Estados do sistema
    {                                              //Se desligado, apagar o backlight; mostrar que está ativo através da mensagem de funcionamento.
      digitalWrite(BACKLIGHT,LOW);
      lcd.setCursor(4, 1);
-     lcd.print("FEED FIFI");
+     lcd.print("iFIFI");
      if (time_running==1)                         //Contagem regressiva para alimentação
        { 
          for (time_remain;time_remain>=0;time_remain--)
@@ -87,15 +82,14 @@ void loop()
          digitalWrite(BACKLIGHT,HIGH);
          lcd.setCursor(4, 0);
          lcd.print("SETUP");          
-         delay(1500);
+         delay(3000);
          lcd.setCursor(4, 0);
          lcd.print("INTERVALO");                   //Menu para configuração do intervalo.
          lcd.setCursor(7, 1);
          lcd.print("6 HORAS");
-         time_remain=21600;
-         if (time_remain > 7200)
+         if (digitalRead(BUTTON_DOWN)==HIGH)
            {  
-             if (digitalRead(BUTTON_DOWN)==HIGH)
+             if (time_remain > 7200)
                { 
                  time_remain=time_remain-7200;
                  showtime=time_remain/3600;
@@ -104,9 +98,9 @@ void loop()
                  lcd.print("HORAS");
                }     
            }
-         if (time_remain < 43200)
+         if (digitalRead(BUTTON_UP)==HIGH)
            {
-             if (digitalRead(BUTTON_UP)==HIGH)
+             if (time_remain < 43200)
                { 
                  time_remain=time_remain+7200;
                  showtime=time_remain/3600;
@@ -122,9 +116,9 @@ void loop()
          lcd.print("QUANTIDADE");
          lcd.setCursor(7, 1);
          lcd.print("200g");
-         if (portion > 50)
+         if (digitalRead(BUTTON_DOWN)==HIGH)
            { 
-             if (digitalRead(BUTTON_DOWN)==HIGH)
+             if (portion > 50)
                { 
                  portion=portion-150;
                  lcd.setCursor(7, 1);
@@ -132,9 +126,9 @@ void loop()
                  lcd.print("g");
                }     
            }
-         if (portion < 500)
+         if (digitalRead(BUTTON_UP)==HIGH)
            {
-             if (digitalRead(BUTTON_UP)==HIGH)
+             if (portion < 500)
                { 
                  portion=portion+150;
                  lcd.setCursor(7, 1);
