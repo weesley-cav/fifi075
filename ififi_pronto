@@ -1,0 +1,218 @@
+#include <LiquidCrystal.h>                      //Importa a biblioteca e define os pinos que serão utilizados para ligação ao display
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+const int BUTTON_SETUP = 10;                      //Botão no pino 10
+const int BUTTON_UP = 8;                          //Botão no pino 8
+const int BUTTON_DOWN = 9;                        //Botão no pino 9
+const int MOVEMENT = 7;                           //Sensor de presença
+const int MOTOR = 6;                              //Motor                        
+
+int portion = 200;                                //Porção a ser colocada para o PET
+int weight = 0;                                   //Pressão exercida no sensor
+int showtime = 0;                                 //Tempo a ser exibido no display
+int setup_mode = 0;                               //Valor relacionado ao estado do menu
+int setup_on = 0;                                 //Estado do sistema de menu
+int time_running = 0;                             //Decisão de correr o tempo
+int feed = 0;                                     //Variável para acionamento do motor
+int time_remain = 216;                            //Valor temporal para controle do sistema
+int time_saved = 0;                               //Valor de tempo salvo
+boolean wait = 0;
+boolean startdecision = false;                    //Decisão tomada pelo usuário ao final da configuração
+
+void setup() 
+{
+  Serial.begin(9600);
+  pinMode(BUTTON_DOWN,INPUT_PULLUP);              //Definindo as entradas e saídas, inicializando o LCD, monitor serial e o motor de passo.
+  pinMode(BUTTON_SETUP,INPUT_PULLUP);            
+  pinMode(BUTTON_UP,INPUT_PULLUP); 
+  pinMode(MOVEMENT, INPUT);
+  pinMode(MOTOR, OUTPUT);  
+  lcd.begin(16, 2); 
+}  
+
+void loop()
+{
+  delay(280);
+  lcd.clear();
+  //Serial.print (digitalRead(BUTTON_SETUP));     //Coloquei uns valores pro monitor serial e acho uma boa pro debug. Posso colocar umas condições depois.
+  //Serial.print (setup_mode);
+  //Serial.print (setup_on);
+  //Serial.print (time_remain);
+  //Serial.print (time_running);
+  //Serial.print (digitalRead(MOVEMENT));
+  Serial.print (feed);
+  //Serial.print (startdecision);
+  Serial.print ("\n");
+  if (digitalRead(BUTTON_SETUP)==HIGH)             //Lógica para ligar/desligar o sistema
+    { setup_mode++;
+      if (setup_on==0)
+        {
+          setup_on=1;
+          lcd.setCursor(5, 0);
+          lcd.print("SETUP");          
+          delay(3000);
+        }      
+//      if (setup_mode>3)                           //Se o estado do setup for maior que 3, deve voltar pro primeiro estado. Assim, garanto que só vai ficar nas telas de tempo, quantidade e 
+//        {                                         //se deve alimentar agora. 
+//          setup_mode=0;
+//          time_running=1;
+//          setup_on=0;
+//        }
+     }
+  
+ 
+ if (setup_on==0)                                 //Estados do sistema
+   {                                              //Se desligado, mostrar que está ativo através da mensagem de funcionamento.
+     lcd.setCursor(5, 1);
+     lcd.print("iFIFI");
+     if (time_running==1)                         //Contagem regressiva para alimentação
+       { 
+         time_saved = time_remain;
+         if (startdecision == 1)
+           {
+             digitalWrite(MOTOR,HIGH);
+             delay(1000);
+             digitalWrite(MOTOR,LOW);
+             feed=0;
+             wait=false;
+           }
+         if (feed==1)                                            //Acionamento do motor com base nas condições desejadas
+           { 
+             if (digitalRead(MOVEMENT)==HIGH)                   //a variável weight precisa do sensor de pressão
+               {
+                 if (weight < portion)                           //FALTA COLOCAR A LÓGICA PRO CÁLCULO EXATO DE PESO, PRECISA CALIBRAR O SENSOR PRA ISSO.
+                   { 
+                     digitalWrite(MOTOR,HIGH);
+                     delay(1000);
+                     digitalWrite(MOTOR,LOW);
+                     feed=0;
+                     wait=false;
+                   }
+                }      
+            }
+         for (time_remain;time_remain>=0;time_remain--)
+            {
+              delay(300);
+              if (digitalRead(BUTTON_SETUP)==HIGH) 
+                {
+                  setup_on=1;
+                  time_remain=21600;
+                  time_running=0;
+                  setup_mode=1;
+                  lcd.clear();
+                  lcd.setCursor(5, 0);
+                  lcd.print("SETUP");          
+                  delay(3000);
+                  break;
+                }
+              if (wait==true && digitalRead(MOVEMENT)==HIGH)
+                {
+                  digitalWrite(MOTOR,HIGH);
+                  delay(1000);
+                  digitalWrite(MOTOR,LOW);
+                  feed=0;
+                  wait=false;
+                  time_remain=time_saved;
+                  break;  
+                }
+              if (time_remain==0)
+                {
+                  feed=1;
+                  wait=true;
+                  time_remain = time_saved;
+                }
+           }
+        }
+   }
+
+ if (setup_on==1)                                  //Se ligado, mostrar menu de configuração; 
+   { 
+     if (setup_mode==1)
+       {
+         lcd.clear();
+         lcd.setCursor(8, 0);
+         lcd.print("INTERVAL");                   //Menu para configuração do intervalo.
+         lcd.setCursor(9, 1);
+         showtime=time_remain/3600;
+         lcd.print(showtime);
+         lcd.print(" HOURS");
+         if (digitalRead(BUTTON_DOWN)==HIGH)
+           {  
+             if (time_remain > 7200)
+               { 
+                 time_remain=time_remain-7200;
+                 lcd.setCursor(9, 1);
+                 showtime=time_remain/3600;
+                 lcd.print(showtime);
+                 lcd.print(" HOURS");
+               }     
+           }
+         if (digitalRead(BUTTON_UP)==HIGH)
+           {
+             if (time_remain < 28800)
+               { 
+                 time_remain=time_remain+7200;
+                 showtime=time_remain/3600;
+                 lcd.setCursor(9, 1);
+                 lcd.print(showtime);
+                 lcd.print(" HOURS");
+               }
+           }
+       }
+     if (setup_mode==2)                            //Menu para configuração da quantidade.
+       { 
+         lcd.setCursor(5, 0);
+         lcd.print("  HOW MUCH?");
+         lcd.setCursor(12, 1);
+         lcd.print(portion);
+         lcd.print("g");
+         if (digitalRead(BUTTON_DOWN)==HIGH)
+           { 
+             if (portion > 100)
+               { 
+                 portion=portion-100;
+                 lcd.setCursor(12, 1);
+                 lcd.print(portion);
+                 lcd.print("g");
+               }     
+           }
+         if (digitalRead(BUTTON_UP)==HIGH)
+           {
+             if (portion < 500)
+               { 
+                 portion=portion+100;
+                 lcd.setCursor(12, 1);
+                 lcd.print(portion);
+                 lcd.print("g");          
+               }
+            }
+       }
+       
+     if (setup_mode==3)                            //Menu para configuração da decisão de alimentar agora ou não.
+       { 
+         lcd.setCursor(7, 0);
+         lcd.print("FEED NOW?");
+         lcd.setCursor(14, 1);
+         if (startdecision==false)
+           {
+             lcd.setCursor(14, 1);
+             lcd.print("NO");
+           }
+         else
+           { 
+             lcd.setCursor(13, 1);
+             lcd.print("YES");
+           }
+         if (digitalRead(BUTTON_DOWN)==HIGH || digitalRead(BUTTON_UP)==HIGH)
+           { 
+             startdecision = !startdecision;
+           }
+         }
+     if (setup_mode==4)                           //Se o estado do setup for maior que 3, deve voltar pro primeiro estado. Assim, garanto que só vai ficar nas telas de tempo, quantidade e 
+           {                                         //se deve alimentar agora. 
+             time_running=1;
+             setup_mode=0;
+             setup_on=0;
+           }
+    }
+}
