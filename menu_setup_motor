@@ -1,0 +1,204 @@
+// Controle de motor de passo com DVR8825
+  #include <Arduino.h>
+  #include "DRV8834.h"
+  #include "A4988.h"
+  #include "DRV8825.h"
+
+// Quantidade de passos por volta completa 
+  #define MOTOR_STEPS 200
+
+// Definição de pinos DIR e STEP
+  #define DIR 8
+  #define STEP 9
+
+// Pinos de controle do DRV8825
+   #define MODE0 10
+   #define MODE1 11
+   #define MODE2 12
+
+// Instância da biblioteca para controle do Driver
+   DRV8825 stepper(MOTOR_STEPS, DIR, STEP, MODE0, MODE1, MODE2);
+
+//Importa a biblioteca e define os pinos que serão utilizados para ligação ao display
+   #include <LiquidCrystal.h>                    
+   LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+const int BUTTON_SETUP = 10;                      //Botão no pino 10
+const int BUTTON_UP = 8;                          //Botão no pino 8
+const int BUTTON_DOWN = 9;                        //Botão no pino 9
+const int BACKLIGHT = 1;                          //Backlight do display no pino 7
+const int MOVEMENT = 7;                           //Sensor de presença
+const int MOTOR = 6;                              //Motor                        
+
+int portion = 200;                                //Porção a ser colocada para o PET
+int weight = 0;                                   //Pressão exercida no sensor
+int time_remain = 21600;                          //Valor temporal para controle do sistema
+int showtime = 0;                                 //Tempo a ser exibido no display
+int setup_mode = 1;                               //Valor relacionado ao estado do menu
+int setup_on = 0;                                 //Estado do sistema de menu
+int time_running = 0;                             //Decisão de correr o tempo
+int feed = 0;                                     //Variável para acionamento do motor
+boolean startdecision = false;                    //Decisão tomada pelo usuário ao final da configuração
+
+void setup() 
+{
+  Serial.begin(9600);
+  stepper.begin(120);
+  pinMode(BUTTON_DOWN,INPUT);                     //Definindo as entradas e saídas, inicializando o LCD, monitor serial e o motor de passo.
+  pinMode(BUTTON_SETUP,INPUT);            
+  pinMode(BUTTON_UP,INPUT); 
+  pinMode(BACKLIGHT, OUTPUT);
+  pinMode(MOVEMENT, INPUT);
+  pinMode(MOTOR, OUTPUT);  
+  lcd.begin(16, 2);                     
+}
+
+void loop()
+{
+  delay(900);
+  lcd.clear();
+  stepper.setMicrostep(1); // modo 1
+  //Serial.print (digitalRead(BUTTON_SETUP));     //Coloquei uns valores pro monitor serial e acho uma boa pro debug. Posso colocar umas condições depois.
+  //Serial.print (setup_mode);
+  //Serial.print (setup_on);
+  if (digitalRead(BUTTON_SETUP)==HIGH)            //Lógica para ligar/desligar o sistema
+    { setup_mode++;
+      if (setup_on==0)
+        {
+          setup_on=1;
+          lcd.setCursor(4, 0);
+          lcd.print("SETUP");          
+          delay(3000);
+        }      
+      if (setup_mode>3)                           //Se o estado do setup for maior que 3, deve voltar pro primeiro estado. Assim, garanto que só vai ficar nas telas de tempo, quantidade e 
+        {                                         //se deve alimentar agora. 
+          setup_mode=0;
+          setup_on=0;
+          time_running=1;
+        }
+     }
+  
+ 
+ if (setup_on==0)                                 //Estados do sistema
+   {                                              //Se desligado, apagar o backlight; mostrar que está ativo através da mensagem de funcionamento.
+     digitalWrite(BACKLIGHT,LOW);
+     lcd.setCursor(5, 1);
+     lcd.print("iFIFI");
+//     if (time_running==1)                         //Contagem regressiva para alimentação
+//       { 
+//         for (time_remain;time_remain>=0;time_remain--)
+//            {
+//              delay(1000);
+//              if (time_remain==0)
+//                {
+//                  feed=1;
+//                }
+//            }
+//        }
+     if (startdecision==true)                                //Acionamento do motor com base nas condições desejadas
+       { 
+       //   if (digitalRead(MOVEMENT)==HIGH)                   //a variável weight precisa do sensor de pressão
+       //   {
+             if (weight < portion)                           //FALTA COLOCAR A LÓGICA PRO CÁLCULO EXATO DE PESO, PRECISA CALIBRAR O SENSOR PRA ISSO.
+                { //stepper.move(100);                         // o motor dará 100 passos em modo 1 para 80º sentido horário
+                  //stepper.rotate(80);
+                  //delay(5000); 
+                  //stepper.move(-100);                        // o motor dará 100 passos em modo 1 para 80º sentido anti-horário
+                  //stepper.rotate(-80);
+                  //delay(5000); // aguarda 5s
+                  digitalWrite(MOTOR,HIGH);
+                  delay(1000);
+                  digitalWrite(MOTOR,LOW);
+                  startdecision=0;
+                  
+                }
+       //     }      
+       }
+   }
+
+ if (setup_on==1)                                  //Se ligado, mostrar menu de configuração; Ativar o backlight.
+   { 
+     if (setup_mode==1)
+       {
+         digitalWrite(BACKLIGHT,HIGH);
+         lcd.setCursor(7, 0);
+         lcd.print("INTERVAL");                   //Menu para configuração do intervalo.
+         lcd.setCursor(8, 1);
+         showtime=time_remain/3600;
+         lcd.print(showtime);
+         lcd.print(" HOURS");
+         if (digitalRead(BUTTON_DOWN)==HIGH)
+           {  
+             if (time_remain > 7200)
+               { 
+                 time_remain=time_remain-7200;
+                 lcd.setCursor(8, 1);
+                 showtime=time_remain/3600;
+                 lcd.print(showtime);
+                 lcd.print(" HOURS");
+               }     
+           }
+         if (digitalRead(BUTTON_UP)==HIGH)
+           {
+             if (time_remain < 43200)
+               { 
+                 time_remain=time_remain+7200;
+                 showtime=time_remain/3600;
+                 lcd.setCursor(8, 1);
+                 lcd.print(showtime);
+                 lcd.print(" HOURS");
+               }
+           }
+       }
+     if (setup_mode==2)                            //Menu para configuração da quantidade.
+       { 
+         lcd.setCursor(6, 0);
+         lcd.print("HOW MUCH?");
+         lcd.setCursor(10, 1);
+         lcd.print(portion);
+         lcd.print("g");
+         if (digitalRead(BUTTON_DOWN)==HIGH)
+           { 
+             if (portion > 50)
+               { 
+                 portion=portion-150;
+                 lcd.setCursor(10, 1);
+                 lcd.print(portion);
+                 lcd.print("g");
+               }     
+           }
+         if (digitalRead(BUTTON_UP)==HIGH)
+           {
+             if (portion < 500)
+               { 
+                 portion=portion+150;
+                 lcd.setCursor(10, 1);
+                 lcd.print(portion);
+                 lcd.print("g");          
+               }
+            }
+       }
+       
+     if (setup_mode==3)                            //Menu para configuração da decisão de alimentar agora ou não.
+       { 
+         lcd.setCursor(1, 0);
+         lcd.print("FEED NOW?");
+         lcd.setCursor(10, 1);
+         if (startdecision==false)
+           {
+             lcd.setCursor(10, 1);
+             lcd.print("NO");
+           }
+         else
+           { 
+             lcd.setCursor(10, 1);
+             lcd.print("YES");
+           }
+         if (digitalRead(BUTTON_DOWN)==HIGH || digitalRead(BUTTON_UP)==HIGH)
+           { 
+             startdecision = !startdecision;
+           }
+        }
+   
+    }
+}
